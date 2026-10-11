@@ -1,4 +1,4 @@
-# TURING — Binary Incrementer / Decrementer
+# TURING - Binary Incrementer / Decrementer
 ### Theory of Computation · Interactive Turing Machine Simulator
 
 ---
