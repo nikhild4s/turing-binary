@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TURING / Binary Incrementer · Decrementer</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+<div class="grid-bg" aria-hidden="true"></div>
+
+<!-- ─── HEADER ─── -->
+<header class="header">
+  <div class="header-left">
+    <span class="wordmark">TURING</span>
+    <span class="header-sep">·</span>
+    <span class="header-sub">Binary Incrementer / Decrementer</span>
+  </div>
+  <div class="header-right">
+    <span class="badge" id="machineStatusBadge">IDLE</span>
+    <button class="btn-pill" id="techToggle" title="Show transition table &amp; machine details">
+      Technical Details
+    </button>
+    <button class="btn-icon" id="infoToggle" title="Theory reference" aria-expanded="false">
+      <svg width="17" height="17" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><path d="M8 7v5M8 5v1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- ─── THEORY DRAWER ─── -->
+<aside class="theory-drawer" id="theoryDrawer" aria-hidden="true">
+  <div class="theory-inner">
+    <div class="theory-col">
+      <h3 class="theory-heading">What is a Turing Machine?</h3>
+      <p>A Turing Machine is a theoretical computer model with an infinite tape of cells, a read/write head, and a set of rules (transitions). It's the foundation of modern computation theory.</p>
+      <p>M = (Q, Σ, Γ, δ, q₀, Q_H) where <strong>δ</strong> is the transition function that decides what to do at every step.</p>
+    </div>
+    <div class="theory-col">
+      <h3 class="theory-heading">How Increment Works</h3>
+      <p>The machine scans right to find the LSB (rightmost bit), then moves left applying <strong>carry propagation</strong>: flip trailing 1s to 0, then flip the first 0 to 1 and halt.</p>
+      <p class="theory-note">Worst case: all-1s input (e.g. 1111→10000). The tape expands by one cell.</p>
+    </div>
+    <div class="theory-col">
+      <h3 class="theory-heading">How Decrement Works</h3>
+      <p>The machine scans right to the LSB, then moves left applying <strong>borrow propagation</strong>: flip trailing 0s to 1, then flip the first 1 to 0 and halt.</p>
+      <p class="theory-note">Decrement of zero is explicitly rejected — there is no smaller non-negative binary number.</p>
+    </div>
+  </div>
+</aside>
+
+<!-- ─── MAIN LAYOUT ─── -->
+<main class="workspace">
+
+  <!-- ══ LEFT PANEL ══ -->
+  <section class="panel panel-left">
+
+    <div class="panel-section">
+      <label class="field-label">Enter Binary Number</label>
+      <div class="input-row">
+        <input type="text" id="binaryInput" class="mono-input"
+               placeholder="e.g. 1011" autocomplete="off" spellcheck="false" maxlength="32" />
+        <button class="btn-clear" id="clearInput" title="Clear">
+          <svg width="13" height="13" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="input-hint">Only 0s and 1s · max 32 bits</div>
+      <div class="input-validation" id="inputValidation"></div>
+    </div>
+
+    <div class="panel-section">
+      <label class="field-label">Choose Operation</label>
+      <div class="op-selector">
+        <button class="op-btn active" id="opIncrement" data-op="increment">
+          <span class="op-symbol">+1</span>
+          <span class="op-name">Increment</span>
+          <span class="op-desc">Add one to the number</span>
+        </button>
+        <button class="op-btn" id="opDecrement" data-op="decrement">
+          <span class="op-symbol">−1</span>
+          <span class="op-name">Decrement</span>
+          <span class="op-desc">Subtract one from it</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <label class="field-label">Simulation Speed</label>
+      <div class="speed-row">
+        <span class="speed-hint">Slow</span>
+        <input type="range" id="speedSlider" min="1" max="5" value="3" class="speed-range" />
+        <span class="speed-hint">Fast</span>
+      </div>
+      <div class="speed-desc" id="speedDesc">Medium speed — good for learning</div>
+    </div>
+
+    <div class="panel-section controls-section">
+      <label class="field-label">Controls</label>
+      <div class="ctrl-grid">
+        <button class="ctrl-btn primary" id="btnRun">
+          <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><path d="M3 2l9 5-9 5V2z" fill="currentColor"/></svg>
+          Run
+        </button>
+        <button class="ctrl-btn" id="btnStep" disabled>
+          <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><rect x="9" y="2" width="2" height="10" rx="1" fill="currentColor"/><path d="M2 2l7 5-7 5V2z" fill="currentColor"/></svg>
+          Step
+        </button>
+        <button class="ctrl-btn" id="btnPause" disabled>
+          <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="4" height="10" rx="1" fill="currentColor"/><rect x="8" y="2" width="4" height="10" rx="1" fill="currentColor"/></svg>
+          Pause
+        </button>
+        <button class="ctrl-btn" id="btnReset">
+          <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><path d="M2 7a5 5 0 105-5H5M5 2L2 5l3 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Reset
+        </button>
+      </div>
+      <div class="ctrl-hint">Use <strong>Step</strong> to go one transition at a time</div>
+    </div>
+
+    <div class="panel-section examples-section">
+      <label class="field-label">Quick Examples</label>
+      <div class="example-list" id="exampleList"></div>
+    </div>
+
+  </section>
+
+  <!-- ══ CENTER PANEL (main simulation) ══ -->
+  <section class="panel panel-center">
+
+    <!-- Narration bar — plain English explanation -->
+    <div class="narration-bar" id="narrationBar">
+      <div class="narration-icon" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M10 9v6M10 7v1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </div>
+      <div class="narration-text" id="narrationText">
+        Enter a binary number on the left, choose an operation, then press <strong>Run</strong> to watch the Turing Machine work step by step.
+      </div>
+    </div>
+
+    <!-- Machine Snapshot Bar -->
+    <div class="state-bar">
+      <div class="state-item state-item-wide">
+        <span class="state-key">Current State</span>
+        <span class="state-val mono" id="dispState">·</span>
+        <span class="state-friendly" id="dispStateFriendly">Machine not started</span>
+      </div>
+      <div class="state-item">
+        <span class="state-key">Head Position</span>
+        <span class="state-val mono" id="dispHead">·</span>
+        <span class="state-friendly">Tape cell index</span>
+      </div>
+      <div class="state-item">
+        <span class="state-key">Symbol Read</span>
+        <span class="state-val mono accent" id="dispRead">·</span>
+        <span class="state-friendly">What head sees</span>
+      </div>
+      <div class="state-item">
+        <span class="state-key">Symbol Written</span>
+        <span class="state-val mono green" id="dispWrite">·</span>
+        <span class="state-friendly">What head writes</span>
+      </div>
+      <div class="state-item">
+        <span class="state-key">Head Moves</span>
+        <span class="state-val mono" id="dispMove">·</span>
+        <span class="state-friendly" id="dispMoveFriendly">Direction</span>
+      </div>
+      <div class="state-item">
+        <span class="state-key">Total Steps</span>
+        <span class="state-val mono" id="dispSteps">0</span>
+        <span class="state-friendly">Transitions done</span>
+      </div>
+    </div>
+
+    <!-- Tape legend -->
+    <div class="tape-legend">
+      <span class="legend-item">
+        <span class="legend-swatch active-swatch"></span>
+        <span>Read/write head position</span>
+      </span>
+      <span class="legend-item">
+        <span class="legend-swatch written-swatch"></span>
+        <span>Cell just written</span>
+      </span>
+      <span class="legend-item">
+        <span class="legend-swatch blank-swatch"></span>
+        <span>Blank cell (empty)</span>
+      </span>
+    </div>
+
+    <!-- ── TAPE ── -->
+    <div class="tape-container" id="tapeContainer" role="region" aria-label="Turing Machine tape">
+      <div class="head-label-top" id="headLabelTop">▼ HEAD</div>
+      <div class="tape-track" id="tapeTrack"></div>
+      <div class="head-indicator" id="headIndicator" aria-hidden="true"></div>
+    </div>
+
+    <!-- Result Banner -->
+    <div class="result-banner hidden" id="resultBanner">
+      <div class="result-inner">
+        <div class="result-left">
+          <span class="result-label" id="resultLabel">RESULT</span>
+          <span class="result-value mono" id="resultValue"></span>
+        </div>
+        <span class="result-meta" id="resultMeta"></span>
+      </div>
+    </div>
+
+    <!-- Transition Log -->
+    <div class="log-section">
+      <div class="log-header">
+        <div>
+          <span class="field-label" style="display:inline;margin:0">Step-by-Step Log</span>
+          <span class="log-sub">every transition the machine made</span>
+        </div>
+        <button class="btn-text" id="clearLog">clear</button>
+      </div>
+      <div class="log-body" id="logBody">
+        <div class="log-empty">The log will show each transition as the machine runs.</div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ══ RIGHT PANEL (Technical Details — hidden by default) ══ -->
+  <section class="panel panel-right" id="techPanel" aria-hidden="true">
+    <div class="panel-section">
+      <label class="field-label">Transition Table</label>
+      <p class="panel-desc">Every possible move the machine can make — highlighted when active.</p>
+      <div class="table-scroll" id="transitionTableContainer">
+        <table class="tm-table" id="transitionTable">
+          <thead>
+            <tr>
+              <th>State</th>
+              <th>Read</th>
+              <th>Write</th>
+              <th>Move</th>
+              <th>Next State</th>
+            </tr>
+          </thead>
+          <tbody id="transitionTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <label class="field-label">Machine Definition</label>
+      <div class="machine-info" id="machineInfo">
+        <div class="info-row"><span class="info-key">States (Q)</span><span class="info-val mono" id="infoStates">—</span></div>
+        <div class="info-row"><span class="info-key">Input Σ</span><span class="info-val mono">{ 0, 1 }</span></div>
+        <div class="info-row"><span class="info-key">Tape Γ</span><span class="info-val mono">{ 0, 1, ␣ }</span></div>
+        <div class="info-row"><span class="info-key">Start state</span><span class="info-val mono" id="infoStart">—</span></div>
+        <div class="info-row"><span class="info-key">Halt states</span><span class="info-val mono" id="infoHalt">—</span></div>
+        <div class="info-row"><span class="info-key">Operation</span><span class="info-val mono" id="infoOp">—</span></div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <label class="field-label">Conventions</label>
+      <div class="conventions-text">
+        <p>Input: rightmost bit = LSB. Leading zeros are <em>preserved</em> (fixed-width).</p>
+        <p>Increment of all-1s expands the tape by one cell to the left.</p>
+        <p>Decrement of zero is <span class="accent-text">explicitly rejected</span>.</p>
+        <p>Blank (␣) cells flank the binary string on both sides.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script src="tm-engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
